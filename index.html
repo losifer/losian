@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LOSIAN</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #050201;
+    }
+    canvas {
+      display: block;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    h1 {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+    #status {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #ff7a1a;
+      font: 500 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+    #status.hidden { opacity: 0; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>LOSIAN</h1>
+  <div id="status">Igniting…</div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
