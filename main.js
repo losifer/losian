@@ -481,13 +481,13 @@ window.addEventListener('pointermove', (e) => {
 });
 window.addEventListener('pointerleave', () => pointer.set(0, 0));
 
-// Grab-and-rotate: drag the title to spin it; a throw coasts on its momentum and a
-// damped spring carries it home to the front-facing angle it was already heading for
+// Grab-and-rotate: drag the title to spin it. A throw coasts on its momentum and a
+// damped spring carries it home to the front-facing angle it was already heading for;
+// a gentle release snaps back to front with a little bounce.
 const DRAG_SPEED = 0.009; // radians per pixel
-const SPRING = 6; // pull toward the rest angle
-const FRICTION = 5; // velocity damping; with SPRING this lands without bouncing
-const SPRING_RAMP = 0.8; // seconds for the spring to fully engage, so a throw coasts first
-const THROW_SPEED = 2; // rad/s; slower releases just settle to the nearest front
+const THROW_SPEED = 2; // rad/s; releases slower than this bounce back instead of gliding
+const THROWN = { spring: 6, friction: 5, ramp: 0.8 }; // lands without bouncing; ramp lets it coast first
+const BOUNCE = { spring: 24, friction: 4.4, ramp: 0.12 }; // ~20% overshoot, one small rebound
 const SETTLE_BACK = 0.6; // rad; a throw that only coasts this far past front eases back to it
 const TAU = Math.PI * 2;
 
@@ -504,6 +504,7 @@ const spinVel = { x: 0, y: 0 };
 const spinRest = { x: 0, y: 0 };
 const drag = { id: null, x: 0, y: 0, time: 0 };
 let sinceRelease = Infinity;
+let spinFeel = BOUNCE;
 
 function hitsTitle(e) {
   if (letters.length === 0) return false;
@@ -549,6 +550,7 @@ function endDrag(e) {
   if (e.pointerId !== drag.id) return;
   // a pause before release kills the flick
   if (performance.now() - drag.time > 80) spinVel.x = spinVel.y = 0;
+  spinFeel = Math.hypot(spinVel.x, spinVel.y) >= THROW_SPEED ? THROWN : BOUNCE;
   spinRest.x = restAngle(spin.x, spinVel.x);
   spinRest.y = restAngle(spin.y, spinVel.y);
   drag.id = null;
@@ -562,7 +564,7 @@ canvas.addEventListener('pointercancel', endDrag);
 // on the next front in its direction of travel so the spring carries the momentum
 // through rather than reversing it; a gentle release settles to the nearest front.
 function restAngle(angle, velocity) {
-  const coast = angle + velocity / FRICTION; // where friction alone would stop it
+  const coast = angle + velocity / spinFeel.friction; // where friction alone would stop it
   if (Math.abs(velocity) < THROW_SPEED) return Math.round(coast / TAU) * TAU;
   const dir = Math.sign(velocity);
   const passed = (dir > 0 ? Math.floor(coast / TAU) : Math.ceil(coast / TAU)) * TAU;
@@ -572,9 +574,10 @@ function restAngle(angle, velocity) {
 function updateSpin(dt) {
   if (drag.id !== null) return;
   sinceRelease += dt;
-  const k = SPRING * THREE.MathUtils.smoothstep(sinceRelease, 0, SPRING_RAMP);
+  const { spring, friction, ramp } = spinFeel;
+  const k = spring * THREE.MathUtils.smoothstep(sinceRelease, 0, ramp);
   for (const axis of ['x', 'y']) {
-    spinVel[axis] += (k * (spinRest[axis] - spin[axis]) - FRICTION * spinVel[axis]) * dt;
+    spinVel[axis] += (k * (spinRest[axis] - spin[axis]) - friction * spinVel[axis]) * dt;
     spin[axis] += spinVel[axis] * dt;
   }
 }
